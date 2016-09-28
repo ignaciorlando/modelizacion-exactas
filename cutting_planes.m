@@ -9,13 +9,6 @@ w = warning ('off','all');
 %        x >= 0
 
 % initializo la matriz nodo/arco
-% N = [1  1  0  0  0  0  0  0  0  0; ...
-%     -1  0  1  1  0  0  0  0  0  0; ...
-%      0 -1  0  0  1  1  1  0  0  0; ...
-%      0  0 -1  0  0 -1  0  1  1  0; ...
-%      0  0  0  0  -1  0 -1 -1  0  1; ...
-%      0  0  0 -1  0  0  0  0 -1 -1];
- 
  N = [ 1  1  0  0  0  0  0;
       -1  0  1  1  0  0  0;
        0 -1  0  0  1  0  0;
@@ -32,6 +25,14 @@ t = [3 1 3 1 3 3 5];
 % t: cota de tiempo
 T = 8;
 
+upper_bound = 20;
+lower_bound = -upper_bound;
+
+
+
+
+
+
 % Con esta sentencia me aseguro de usar el método simplex, que como recorre
 % los vértices, en caso de que haya 2 caminos óptimos iguales, va a
 % devolvernos uno solo. Si no usara esto, obtendría flujos fraccionarios.
@@ -45,7 +46,7 @@ f_lambdas_real = [];    % estructuras para acumular valores y graficar
 xis = [];               %
 x_stars = [];           %
 
-lambda_0 = 1;
+lambda_0 = rand * upper_bound;
 lambda_i = lambda_0;
 
 epsilon = 1e-4;
@@ -54,6 +55,7 @@ epsilon = 1e-4;
 lambdas = [lambda_0 lambdas];
 
 [x_star_i, f_lambda_real_i] = linprog(c + lambda_0 * t, [], [], N, b, zeros(1,7), [],[],options); 
+f_lambda_ant = 30000;
 f_lambda_i = (c + lambda_0 * t) * x_star_i - lambda_0 * T;
 f_lambdas = [f_lambdas f_lambda_i];
 f_lambdas_real = [f_lambdas_real f_lambda_real_i];
@@ -66,17 +68,19 @@ B = [f_lambda_i - xi_i * lambda_i];
 
 iter = 0;
 
-while (abs(f_lambda_real_i - f_lambda_i) > epsilon && iter < 15)
+while (abs(f_lambda_real_i - f_lambda_i) > epsilon && iter < 30)
+%while (abs(f_lambda_i - f_lambda_ant) > eps) || (iter > 5)
+    
+    f_lambda_ant = f_lambda_i;
     
     % busco mi nuevo lambda minimizando %CUTTING PLANES
-    o = linprog([1 0], A, B, [], [], [-20 -20], [20 20], [], options);
+    o = linprog([1 0], A, B, [], [], [lower_bound lower_bound], [upper_bound upper_bound], [], options);
     lambda_i = o(end);  
     
     lambda_i_prev = lambda_i;
     % MODELO ORIGINAL
     [x_star_i, f_lambda_real_i] = linprog(c + lambda_i * t, [], [], N, b, zeros(1,7),[],[],options);
     xi_i = t * x_star_i - T;
-    t * x_star_i
     f_lambda_i = (c + lambda_i * t) * x_star_i - lambda_i * T;
     
     f_lambdas = [f_lambdas f_lambda_i];                   %
@@ -91,8 +95,38 @@ while (abs(f_lambda_real_i - f_lambda_i) > epsilon && iter < 15)
     iter = iter + 1;
 end
 
-figure, plot(f_lambdas); title('f(lambda) estimado');
-figure, plot(f_lambdas_real); title('f(lambda) real');
-figure, plot(xis); title('xis');
-figure, plot(x_star_i); title('x*');
-figure, plot(lambdas); title('lambdas');
+
+figure
+
+subplot(2,2,1);
+plot(f_lambdas, 'LineWidth', 2); 
+hold on
+plot(f_lambdas_real, 'LineWidth', 2)
+legend('f(\lambda) estimado', 'f(\lambda) real', 'location', 'southeast');
+xlabel('iteración')
+ylabel('f');
+xlim([1 iter]);
+grid on
+title('Evolución del valor de f(\lambda) estimado y real por iteración');
+
+subplot(2,2,3);
+plot(xis, 'LineWidth', 2); 
+xlim([1 iter]);
+grid on
+title('Evolución de \xi por iteración');
+xlabel('iteración')
+ylabel('\xi')
+
+subplot(2,2,4);
+bar(x_star_i); 
+title('Solución');
+xlabel('Columna en matriz nodo/arco')
+ylabel('x^*');
+
+subplot(2,2,2);
+plot(lambdas, 'LineWidth', 2);
+xlim([1 iter]);
+grid on
+title('Evolución de \lambda por iteración');
+xlabel('iteración')
+ylabel('\lambda');
