@@ -1,6 +1,6 @@
-close all, clear, clc;
+close all; clear; clc;
 w = warning ('off','all');
-
+%format long;
 % PROBLEMA DE FLUJO ÓPTIMO
 
 % min cX
@@ -9,21 +9,28 @@ w = warning ('off','all');
 %        x >= 0
 
 % initializo la matriz nodo/arco
-N = [1 1 0 0 0 0 0 0 0 0; ...
-    -1 0 1 1 0 0 0 0 0 0; ...
-    0 -1 0 0 1 1 1 0 0 0; ...
-    0 0 -1 0 0 -1 0 1 1 0; ...
-    0 0 0 -1 0 0 -1 -1 0 1; ...
-    0 0 0 0 0 0 0 0 -1 -1];
-
+% N = [1  1  0  0  0  0  0  0  0  0; ...
+%     -1  0  1  1  0  0  0  0  0  0; ...
+%      0 -1  0  0  1  1  1  0  0  0; ...
+%      0  0 -1  0  0 -1  0  1  1  0; ...
+%      0  0  0  0  -1  0 -1 -1  0  1; ...
+%      0  0  0 -1  0  0  0  0 -1 -1];
+ 
+ N = [ 1  1  0  0  0  0  0;
+      -1  0  1  1  0  0  0;
+       0 -1  0  0  1  0  0;
+       0  0 -1  0  0  1  0;
+       0  0  0  0 -1  0  1;
+       0  0  0 -1  0 -1 -1;]
 % b: flujo que entra y flujo que sale
 b = [1 0 0 0 0 -1];
 % c: costos
-c = [1 10 1 2 1 5 12 10 1 2];
+%c = [1 10 1 2 1 5 12 10 1 2];
+c = [2 1 2 5 2 1 2];
 % t: tiempos
-t = [10 3 1 3 2 7 3 1 7 2];
+t = [3 1 3 1 3 3 5];
 % t: cota de tiempo
-T = 10;
+T = 8;
 
 % Con esta sentencia me aseguro de usar el método simplex, que como recorre
 % los vértices, en caso de que haya 2 caminos óptimos iguales, va a
@@ -32,65 +39,60 @@ options = optimoptions('linprog', 'Algorithm', 'Simplex', 'Display', 'off');
 
 % Resuelvo por cutting planes
 
-lambda_0 = 0;
-lambda_i_prev = -Inf;
+lambdas = [];           %
+f_lambdas = [];         %
+f_lambdas_real = [];    % estructuras para acumular valores y graficar
+xis = [];               %
+x_stars = [];           %
+
+lambda_0 = 1;
 lambda_i = lambda_0;
 
 epsilon = 1e-4;
 
 % precalculo los valores de x_star, xi y f_lambda para inicializar
-lambdas = lambda_i;
-[x_stars, xis, f_lambdas] = oraculo(lambda_i, c, t, T, N, b);
+lambdas = [lambda_0 lambdas];
 
-% itero hasta que la diferencia entre los lambdas sea menor a epsilon
-while abs(lambda_i - lambda_i_prev) > epsilon
+[x_star_i, f_lambda_real_i] = linprog(c + lambda_0 * t, [], [], N, b, zeros(1,7), [],[],options); 
+f_lambda_i = (c + lambda_0 * t) * x_star_i - lambda_0 * T;
+f_lambdas = [f_lambdas f_lambda_i];
+f_lambdas_real = [f_lambdas_real f_lambda_real_i];
+xi_i = t * x_star_i - T;
+xis = [xis xi_i];
+x_stars = [x_stars x_star_i];
+
+A = [-1 -xi_i]; 
+B = [f_lambda_i - xi_i * lambda_i];
+
+iter = 0;
+
+while (abs(f_lambda_real_i - f_lambda_i) > epsilon && iter < 15)
     
-    % guardo el valor actual de lambda como valor anterior
+    % busco mi nuevo lambda minimizando %CUTTING PLANES
+    o = linprog([1 0], A, B, [], [], [-20 -20], [20 20], [], options);
+    lambda_i = o(end);  
+    
     lambda_i_prev = lambda_i;
+    % MODELO ORIGINAL
+    [x_star_i, f_lambda_real_i] = linprog(c + lambda_i * t, [], [], N, b, zeros(1,7),[],[],options);
+    xi_i = t * x_star_i - T;
+    t * x_star_i
+    f_lambda_i = (c + lambda_i * t) * x_star_i - lambda_i * T;
     
-    % llamo al oráculo para que me de un nuevo valor de x_star y de
-    % subgradiente xi
-    [x_star_i, xi_i, f_lambda_i] = oraculo(lambda_i, c, t, T, N, b);
-
-    % concateno los valores del nuevo plano
-    x_stars = cat(2, x_stars, x_star_i);
-    xis = cat(1, xis, xi_i);
-    f_lambdas = cat(1, f_lambdas, f_lambda_i);
+    f_lambdas = [f_lambdas f_lambda_i];                   %
+    f_lambdas_real = [f_lambdas_real f_lambda_real_i ];   %
+    xis = [xis xi_i];                                     % estruct. para 
+    x_stars = [x_stars; x_star_i];                        % acumular
+    lambdas = [lambdas lambda_i];                         %
     
-    % busco mi nuevo lambda minimizando
-    A = cat(2, -ones(length(xis), 1), -xis);
-    b = cat(1, f_lambdas - xis .* lambdas);
-    output = linprog([1 0], A, b, [], [], -Inf, 0);
+    A = cat(1, A, [-1 -xi_i]);
+    B = cat(2, B, f_lambda_i - xi_i * lambda_i);
     
-    lambda_i = output(end);
-    
+    iter = iter + 1;
 end
 
-
-
-
-
-
-% %CÓDIGO VIEJO
-% % Resuelvo el problema sin restricciones de tiempo
-% disp('Problema sin restricciones de tiempo:');
-% xsol = linprog(c, [], [], N, b, zeros(size(N,1),1), [], [], options);
-% 
-% % defino phi de lambda
-% 
-% lambda_vals = 0:0.1:10;
-% phi_lambda = zeros(length(lambda_vals));
-% for i=1:length(lambda_vals)
-%     lambda=lambda_vals(i);
-%     [sol, fval] = linprog((c + lambda * t'), [], [], N, b, zeros(size(N,1),1), [], [], options);
-%     phi_lambda(i) = -lambda * T + fval;
-% end
-% 
-% figure, plot(lambda_vals, phi_lambda);
-% title('Función objetivo del problema dual');
-% xlabel('\lambda values');
-% ylabel('\phi(\lambda)');
-% box on
-% grid on
-
-    
+figure, plot(f_lambdas); title('f(lambda) estimado');
+figure, plot(f_lambdas_real); title('f(lambda) real');
+figure, plot(xis); title('xis');
+figure, plot(x_star_i); title('x*');
+figure, plot(lambdas); title('lambdas');
