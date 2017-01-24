@@ -25,7 +25,7 @@ c = [2 1 2 5 2 1 2];
 % t: tiempos
 t = [3 1 3 1 3 3 5];
 % t: cota de tiempo
-T = 4;
+T = 10;
 
 lower_bounds = [-Inf 0];
 
@@ -62,15 +62,21 @@ lambdas = [lambda_0 lambdas];
 %
 [x_star_i, phi_lambda_i] = linprog(c + lambda_0 * t, [], [], N, b, zeros(1,size(N,2)), [],[],options); 
 
-% f_lambda_i es el resultado de resolver mi cutt
+% f_lambda_i es el resultado de resolver mi cutting planes. Como todav?a no
+% lo corr?, inicialmente lo seteo en un valor alto
 f_lambda_i = 30000;
+
+% Concateno todo para ir llevando un hist?rico
 f_lambdas = [f_lambdas f_lambda_i];
 phi_lambdas = [phi_lambdas phi_lambda_i];
 xi_i = t * x_star_i - T;
 xis = [xis xi_i];
 x_stars = [x_stars x_star_i];
 
+% Acumulo los subgradientes
 A = [-1 -xi_i]; 
+% Acumulo lo que necesito para las desigualdades que resuelvo por cutting
+% planes
 B = [f_lambda_i - xi_i * lambda_i];
 
 iter = 0;

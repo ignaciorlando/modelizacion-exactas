@@ -25,7 +25,7 @@ c = [2 1 2 5 2 1 2];
 % t: tiempos
 t = [3 1 3 1 3 3 5];
 % t: cota de tiempo
-T = 4.1;
+T = 8;
 
 lower_bounds = [-Inf 0];
 
@@ -47,10 +47,12 @@ phi_lambdas = [];    % estructuras para acumular valores y graficar
 xis = [];               %
 x_stars = [];           %
 
+epsilon = 1e-4;
+
+%%
+
 lambda_0 = 0;%rand;
 lambda_i = lambda_0;
-
-epsilon = 1e-4;
 
 % precalculo los valores de x_star, xi y f_lambda para inicializar
 lambdas = [lambda_0 lambdas];
@@ -60,7 +62,8 @@ lambdas = [lambda_0 lambdas];
 % min c' x + \lambda * (tx - T)
 % x>=0
 %
-[x_star_i, phi_lambda_i] = linprog(c + lambda_0 * t, [], [], N, b, zeros(1,size(N,2)), [],[],options); 
+[x_star_i, phi_lambda_i_parcial] = linprog(c + lambda_0 * t, [], [], N, b, zeros(1,size(N,2)), [],[],options); 
+phi_lambda_i = phi_lambda_i_parcial - lambda_0 * T;
 
 % f_lambda_i es el resultado de resolver mi cutting planes. Como todav?a no
 % lo corr?, inicialmente lo seteo en un valor alto
@@ -77,18 +80,21 @@ x_stars = [x_stars x_star_i];
 A = [-1 -xi_i]; 
 % Acumulo lo que necesito para las desigualdades que resuelvo por cutting
 % planes
-B = [f_lambda_i - xi_i * lambda_i];
+B = [phi_lambda_i - xi_i * lambda_i];
+
+%%
 
 iter = 0;
 
-while ~(abs(phi_lambda_i - f_lambda_i) < epsilon) && (iter < 30)
+while ~(abs(phi_lambda_i - f_lambda_i) < epsilon)% && (iter < 30)
     
     
-    % busco mi nuevo lambda minimizando %CUTTING PLANES
+    %CUTTING PLANES
     [p, f_lambda_i] = linprog([1 0], A, B, [], [], lower_bounds, [], [], options);
+    f_lambda_i = f_lambda_i * -1;
     lambda_i = p(end);  
-    
     lambda_i_prev = lambda_i;
+    
     % MODELO ORIGINAL
     [x_star_i, phi_lambda_i_parcial] = linprog(c + lambda_i * t, [], [], N, b, zeros(1,size(N,2)),[],[],options);
     phi_lambda_i = phi_lambda_i_parcial - lambda_i * T;
@@ -103,7 +109,9 @@ while ~(abs(phi_lambda_i - f_lambda_i) < epsilon) && (iter < 30)
     lambdas = [lambdas lambda_i];                         %
     
     A = cat(1, A, [-1 -xi_i]);
-    B = cat(2, B, f_lambda_i - xi_i * lambda_i);
+    B = cat(2, B, phi_lambda_i - xi_i * lambda_i);
+    
+    [ phi_lambda_i,   f_lambda_i ]
     
     iter = iter + 1;
 end
@@ -111,7 +119,7 @@ end
 if abs(phi_lambda_i - f_lambda_i) <= epsilon
     keys(find(x_star_i))
 else
-    disp('No hay solucion');
+   disp('No hay solucion');
 end
 
 % figure

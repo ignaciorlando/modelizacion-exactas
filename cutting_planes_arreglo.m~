@@ -25,7 +25,13 @@ c = [2 1 2 5 2 1 2];
 % t: tiempos
 t = [3 1 3 1 3 3 5];
 % t: cota de tiempo
-T = 3;
+T = 8;
+
+lower_bounds = [-Inf 0];
+
+
+
+
 
 
 % Con esta sentencia me aseguro de usar el m?todo simplex, que como recorre
@@ -48,7 +54,6 @@ epsilon = 1e-4;
 A = [];
 B = [];
 exit_flag = -3;
-iter = 0
 
 % Mientras el cutting planes nos de unbounded
 while (exit_flag==-3)
@@ -85,12 +90,11 @@ while (exit_flag==-3)
     B = cat(2, B, [phi_lambda_i - xi_i * lambda_i]);
     
     %CUTTING PLANES
-    [p, f_lambda_i, exit_flag] = linprog([1 0], A, B, [], [], [-Inf 0], [], [], options);
+    [p, f_lambda_i, exit_flag] = linprog([1 0], A, B, [], [], lower_bounds, [], [], options);
     f_lambda_i = f_lambda_i * -1;
     lambda_i = p(end);  
     lambda_i_prev = lambda_i;
 
-    iter = iter + 1
 end
 
 %%
@@ -115,11 +119,11 @@ B = cat(2, B, phi_lambda_i - xi_i * lambda_i);
 
 iter = iter + 1;
 
-while ~(abs(phi_lambda_i - f_lambda_i) < epsilon) && (iter < 30)
+while ~(abs(phi_lambda_i - f_lambda_i) < epsilon)% && (iter < 30)
     
     
     %CUTTING PLANES
-    [p, f_lambda_i] = linprog([1 0], A, B, [], [], [-Inf 0], [], [], options);
+    [p, f_lambda_i] = linprog([1 0], A, B, [], [], lower_bounds, [], [], options);
     f_lambda_i = f_lambda_i * -1;
     lambda_i = p(end);  
     lambda_i_prev = lambda_i;
