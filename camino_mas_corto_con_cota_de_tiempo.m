@@ -38,6 +38,10 @@ function [x_star, tags] = camino_mas_corto_con_cota_de_tiempo(arcos, b, c, t, T)
             N(str2num(nodos_del_arco{2}), i) = -1;
         end
         
+        if ~is_feasible(T,N,t,b)
+            error('No existe solucion porque no hay un camino cuyo costo sea menor o igual que T');
+        end
+        
         % Resuelvo por cutting planes
         [hubo_solucion, x_star] = resolver_por_cutting_planes(N, b, c, t, T);
         

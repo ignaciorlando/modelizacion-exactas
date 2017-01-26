@@ -15,6 +15,6 @@ orig = find(begin_end == IN);
 dest = find(begin_end == DEST);
 [dist,~,~] = graphshortestpath(graph, orig, dest);
 
-feasible = dist > MIN_TIME;
+feasible = dist <= MIN_TIME;
 end
 
