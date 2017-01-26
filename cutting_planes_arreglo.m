@@ -1,5 +1,6 @@
 close all; clear; clc;
 w = warning ('off','all');
+
 %format long;
 % PROBLEMA DE FLUJO ?PTIMO
 
@@ -8,24 +9,30 @@ w = warning ('off','all');
 %        tx <= T
 %        x >= 0
 
-keys = {'1-2', '1-3', '2-4', '2-6', '3-5', '4-6', '5-6'};
+% keys = {'1-2', '1-3', '2-4', '2-6', '3-5', '4-6', '5-6'};
+% 
+% % initializo la matriz nodo/arco
+%  N = [ 1  1  0  0  0  0  0;
+%       -1  0  1  1  0  0  0;
+%        0 -1  0  0  1  0  0;
+%        0  0 -1  0  0  1  0;
+%        0  0  0  0 -1  0  1;
+%        0  0  0 -1  0 -1 -1;]
+% % b: flujo que entra y flujo que sale
+% b = [1 0 0 0 0 -1];
+% % c: costos
+% %c = [1 10 1 2 1 5 12 10 1 2];
+% c = [2 1 2 5 2 1 2];
+% % t: tiempos
+% t = [3 1 3 1 3 3 5];
+% % t: cota de tiempo
+% T = 10;
 
-% initializo la matriz nodo/arco
- N = [ 1  1  0  0  0  0  0;
-      -1  0  1  1  0  0  0;
-       0 -1  0  0  1  0  0;
-       0  0 -1  0  0  1  0;
-       0  0  0  0 -1  0  1;
-       0  0  0 -1  0 -1 -1;]
-% b: flujo que entra y flujo que sale
-b = [1 0 0 0 0 -1];
-% c: costos
-%c = [1 10 1 2 1 5 12 10 1 2];
-c = [2 1 2 5 2 1 2];
-% t: tiempos
-t = [3 1 3 1 3 3 5];
-% t: cota de tiempo
-T = 3;
+% Arreglo de claves
+keys = {'10-1', '10-2', '1-3', '1-4', '2-3', '2-5', '3-4', '3-5', '4-6', '4-7', '5-6', '5-8', '6-7', '6-8', '7-9', '8-9'};
+
+% Matriz nodo/arco
+N = [
 
 
 % Con esta sentencia me aseguro de usar el m?todo simplex, que como recorre
@@ -147,44 +154,49 @@ end
 
 if abs(phi_lambda_i - f_lambda_i) <= epsilon
     keys(find(x_star_i))
+    
+    figure
+    plot(f_lambdas, 'LineWidth', 2); 
+    hold on
+    plot(phi_lambdas, 'LineWidth', 2)
+    legend({'$f(\lambda)$', '$\phi(\lambda)$'}, 'location', 'southeast', 'Interpreter', 'LaTex');
+    xlabel('iteracion', 'Interpreter', 'LaTex');
+    ylabel('$f$', 'Interpreter', 'LaTex');
+    xlim([1 iter]);
+    grid on
+    title('Evolucion del valor de $f(\lambda)$ y $\phi(\lambda)$ por iteracion', 'Interpreter', 'LaTex');
+    set(findall(gcf,'-property','FontSize'),'FontSize',16)
+    
+    figure
+    plot(xis, 'LineWidth', 2); 
+    xlim([1 iter]);
+    grid on
+    title('Evolucion de $\xi$ por iteracion', 'Interpreter', 'LaTex');
+    xlabel('iteracion', 'Interpreter', 'LaTex');
+    ylabel('$\xi$', 'Interpreter', 'LaTex');
+    set(findall(gcf,'-property','FontSize'),'FontSize',16)
+    
+    figure
+    bar(x_star_i); 
+    title('Solucion', 'Interpreter', 'LaTex')
+    xlabel('Columna en matriz nodo/arco', 'Interpreter', 'LaTex')
+    ylabel('$x^*$', 'Interpreter', 'LaTex');
+    set(findall(gcf,'-property','FontSize'),'FontSize',16)
+    
+    figure
+    plot(lambdas, 'LineWidth', 2);
+    xlim([1 iter]);
+    grid on
+    title('Evolucion de $\lambda$ por iteracion', 'Interpreter', 'LaTex');
+    xlabel('iteracion', 'Interpreter', 'LaTex');
+    ylabel('$\lambda$', 'Interpreter', 'LaTex');
+    set(findall(gcf,'-property','FontSize'),'FontSize',16)
+    
 else
    disp('No hay solucion');
 end
 
-% figure
-% 
-% subplot(2,2,1);
-% plot(f_lambdas, 'LineWidth', 2); 
-% hold on
-% plot(f_lambdas_real, 'LineWidth', 2)
-% legend('f(\lambda) estimado', 'f(\lambda) real', 'location', 'southeast');
-% xlabel('iteraci?n')
-% ylabel('f');
-% xlim([1 iter]);
-% grid on
-% title('Evoluci?n del valor de f(\lambda) estimado y real por iteraci?n');
-% 
-% subplot(2,2,3);
-% plot(xis, 'LineWidth', 2); 
-% xlim([1 iter]);
-% grid on
-% title('Evoluci?n de \xi por iteraci?n');
-% xlabel('iteraci?n')
-% ylabel('\xi')
-% 
-% subplot(2,2,4);
-% bar(x_star_i); 
-% title('Soluci?n');
-% xlabel('Columna en matriz nodo/arco')
-% ylabel('x^*');
-% 
-% subplot(2,2,2);
-% plot(lambdas, 'LineWidth', 2);
-% xlim([1 iter]);
-% grid on
-% title('Evoluci?n de \lambda por iteraci?n');
-% xlabel('iteraci?n')
-% ylabel('\lambda');
+
 
 
 min_lambda = 0;
@@ -199,4 +211,9 @@ for lambda = min_lambda : prec : max_lambda
     phi_lambda(i) = a - lambda * T;
     i = i + 1;
 end
-plot(dom_lambda, phi_lambda);
+plot(dom_lambda, phi_lambda, 'LineWidth', 2);
+xlabel('$\lambda$', 'Interpreter', 'LaTex');
+ylabel('$\phi(\lambda)$', 'Interpreter', 'LaTex');
+box on
+grid on
+set(findall(gcf,'-property','FontSize'),'FontSize',16)
