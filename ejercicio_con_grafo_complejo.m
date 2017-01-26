@@ -12,5 +12,15 @@ b = [0, 0, 0, 0, 0, 0, 0, 0, 1, -1];
 % Cota de tiempo
 T = 8;
 
+imprimir_grafo(length(b), arcos);
+
 % Resuelvo el problema
 [x_star, tags] = camino_mas_corto_con_cota_de_tiempo(arcos, b, c, t, T);
+
+% Muestro la solucion por pantalla
+if isempty(x_star)
+    fprintf('No hay solucion\n');
+else
+    fprintf('La solucion es:\n');
+    disp(tags);
+end

@@ -78,7 +78,7 @@ function [hubo_solucion, x_star] = resolver_por_cutting_planes(N, b, c, t, T)
     A = [];
     B = [];
     exit_flag = -3;
-    iter = 0
+    iter = 0;
 
     % Mientras el cutting planes nos de unbounded
     while (exit_flag==-3)
