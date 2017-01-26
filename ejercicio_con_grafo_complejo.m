@@ -1,4 +1,4 @@
-
+close all;
 % Este ejercicio
 
 % Arreglo de arcos

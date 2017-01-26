@@ -205,6 +205,7 @@ function [hubo_solucion, x_star] = resolver_por_cutting_planes(N, b, c, t, T)
         title('Solucion', 'Interpreter', 'LaTex')
         xlabel('Columna en matriz nodo/arco', 'Interpreter', 'LaTex')
         ylabel('$x^*$', 'Interpreter', 'LaTex');
+        set(gca,'XTick',1:length(c))
         set(findall(gcf,'-property','FontSize'),'FontSize',16)
 
         figure
