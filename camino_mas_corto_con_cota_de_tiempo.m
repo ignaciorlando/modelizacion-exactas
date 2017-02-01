@@ -83,7 +83,7 @@ function [hubo_solucion, x_star] = resolver_por_cutting_planes(N, b, c, t, T)
     % Mientras el cutting planes nos de unbounded
     while (exit_flag==-3)
 
-        lambda_0 = rand;
+        lambda_0 = rand * 30000;
         lambda_i = lambda_0;
 
         % precalculo los valores de x_star, xi y f_lambda para inicializar
