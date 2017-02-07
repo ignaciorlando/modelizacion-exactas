@@ -16,6 +16,6 @@ function imprimir_grafo(num_nodos, arcos)
         UG(nodo1, nodo2) = 1;
     end
 
-    view(biograph(UG,[],'ShowArrows','off','ShowWeights','on'))
+    %view(biograph(UG,[],'ShowArrows','off','ShowWeights','on'))
 
 end
