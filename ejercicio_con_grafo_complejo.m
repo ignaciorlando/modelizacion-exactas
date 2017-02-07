@@ -23,4 +23,6 @@ if isempty(x_star)
 else
     fprintf('La solucion es:\n');
     disp(tags);
+    disp(sum(c(x_star)))
+    disp(sum(t(x_star)))
 end
